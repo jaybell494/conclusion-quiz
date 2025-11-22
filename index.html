@@ -1,0 +1,403 @@
+<style>
+#intro-quiz-app * {
+    box-sizing: border-box;
+}
+#intro-quiz-app {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.intro-quiz-option {
+    padding: 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    margin-bottom: 15px;
+}
+.intro-quiz-option:hover:not(.disabled) {
+    border-color: #e74c3c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
+}
+.intro-quiz-option.selected {
+    border-color: #e74c3c;
+    background: #fff5f5;
+}
+.intro-quiz-option.correct {
+    border-color: #27ae60;
+    background: #f1f8e9;
+}
+.intro-quiz-option.incorrect {
+    border-color: #e74c3c;
+    background: #ffebee;
+}
+.intro-quiz-option.disabled {
+    cursor: not-allowed;
+}
+.intro-option-letter {
+    font-weight: bold;
+    color: #e74c3c;
+    margin-right: 10px;
+}
+.intro-quiz-option.correct .intro-option-letter {
+    color: #27ae60;
+}
+.intro-quiz-option.incorrect .intro-option-letter {
+    color: #e74c3c;
+}
+.intro-quiz-btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+.intro-quiz-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.intro-quiz-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.intro-quiz-btn-primary {
+    background: #27ae60;
+    color: white;
+}
+.intro-quiz-btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+</style>
+
+<div id="intro-quiz-app" style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 900px; width: 100%; margin: 20px auto;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #2c3e50; font-size: 2.5em; margin-bottom: 10px; font-weight: 600;">Introduction Elements Quiz</h1>
+        <p style="color: #666; font-size: 1.1em; margin-bottom: 20px;">Test your knowledge of the four essential elements of an academic introduction</p>
+        <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 30px;">
+            <div id="intro-progress-fill" style="height: 100%; background: linear-gradient(90deg, #27ae60, #229954); width: 0%; transition: width 0.5s ease;"></div>
+        </div>
+    </div>
+    <div id="intro-quiz-content">
+        <div style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="background: #e74c3c; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600;">
+                    Question <span id="intro-current-question">1</span> of 10
+                </div>
+            </div>
+            <div id="intro-question-text" style="font-size: 1.3em; color: #333; margin-bottom: 25px; line-height: 1.5;"></div>
+            <div id="intro-options-container" style="display: flex; flex-direction: column;"></div>
+            <div id="intro-feedback" style="margin-top: 20px; padding: 20px; border-radius: 10px; display: none;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 30px; gap: 15px; flex-wrap: wrap;">
+            <button id="intro-prev-btn" class="intro-quiz-btn intro-quiz-btn-secondary">Previous</button>
+            <button id="intro-next-btn" class="intro-quiz-btn intro-quiz-btn-primary">Next Question</button>
+        </div>
+    </div>
+    <div id="intro-results-container" style="display: none; text-align: center;">
+        <h2 style="color: #333;">Quiz Complete!</h2>
+        <div id="intro-score-display" style="font-size: 3em; color: #27ae60; margin: 20px 0; font-weight: bold;">0/10</div>
+        <div id="intro-score-message" style="font-size: 1.3em; color: #333; margin-bottom: 30px;"></div>
+        <button id="intro-restart-btn" class="intro-quiz-btn intro-quiz-btn-primary" style="font-size: 1.2em; padding: 15px 40px;">Take Quiz Again</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    const quizData = [
+        {
+            question: "Which of the following is an example of an effective hook/attention-getting statement?",
+            options: [
+                "In this essay, I will discuss artificial intelligence in education.",
+                "\"Did you know that 89% of college students have already used artificial intelligence tools like ChatGPT for academic purposes, according to a recent survey (Johnson, 2024)?\"",
+                "When I was in high school, I never used AI tools for my homework.",
+                "Artificial intelligence is a topic that many people talk about these days."
+            ],
+            correct: 1,
+            explanation: "The correct answer includes a startling statistic with proper citation (Johnson, 2024) and uses a compelling question format. Personal stories and generic statements should be avoided in academic hooks."
+        },
+        {
+            question: "What is the primary purpose of the Background/Current Situation section?",
+            options: [
+                "To state your thesis and main arguments",
+                "To provide general introduction to the subject and explain how the situation currently stands",
+                "To grab the reader's attention with a startling statistic",
+                "To point out why the current situation is problematic"
+            ],
+            correct: 1,
+            explanation: "The Background/Current Situation provides general context about the topic and explains the current state without yet arguing or identifying problems. It sets the stage for your discussion."
+        },
+        {
+            question: "Identify which statement below represents a Problem Statement:",
+            options: [
+                "\"Universities must thoughtfully integrate artificial intelligence into their educational frameworks.\"",
+                "\"However, this unregulated integration has created a chaotic landscape where some institutions ban AI entirely while others embrace it without proper guidelines, leading to inconsistent educational standards and ethical concerns.\"",
+                "\"This widespread adoption reflects the current reality of higher education, where AI technologies are rapidly infiltrating classrooms, research laboratories, and administrative offices across university campuses.\"",
+                "\"Did you know that 89% of college students have already used artificial intelligence tools?\""
+            ],
+            correct: 1,
+            explanation: "The Problem Statement identifies why the current situation is problematic or needs addressing. It points out the chaotic landscape, inconsistent standards, and ethical concerns - all problems that need solutions."
+        },
+        {
+            question: "What should you avoid when writing a hook/attention-getting statement?",
+            options: [
+                "Using a compelling question",
+                "Including a startling statistic with citation",
+                "Personal stories and anecdotes",
+                "Using proper citation format (author's last name, year)"
+            ],
+            correct: 2,
+            explanation: "Personal stories and anecdotes should be avoided in academic hooks. Instead, use compelling questions or startling statistics with proper citations in the format (author's last name, year)."
+        },
+        {
+            question: "A strong thesis statement should include:",
+            options: [
+                "Only your main argument without any supporting reasons",
+                "Your position and three main reasons clearly stated",
+                "A question for the reader to consider",
+                "General background information about the topic"
+            ],
+            correct: 1,
+            explanation: "A strong thesis includes your clear position AND three specific main reasons that will be developed in your body paragraphs. This provides a roadmap for your entire essay."
+        },
+        {
+            question: "Which introduction element comes LAST in your introduction paragraph?",
+            options: [
+                "Hook/Attention-Getting Statement",
+                "Background/Current Situation",
+                "Problem Statement",
+                "Thesis Statement"
+            ],
+            correct: 3,
+            explanation: "The Thesis Statement comes last. It's the culmination of your introduction, presenting your main argument after you've grabbed attention, provided context, and identified the problem."
+        },
+        {
+            question: "Read this thesis statement: \"Universities must thoughtfully integrate artificial intelligence into their educational frameworks because it (1) enhances personalized learning experiences, (2) prepares students for an AI-driven workforce, and (3) democratizes access to high-quality educational resources.\" What makes this thesis effective?",
+            options: [
+                "It asks a compelling question",
+                "It provides background information",
+                "It clearly states a position and provides three specific reasons",
+                "It points out a problem that needs addressing"
+            ],
+            correct: 2,
+            explanation: "This thesis is effective because it clearly states a position (\"Universities must thoughtfully integrate...\") and provides three specific, numbered reasons that preview the essay's body paragraphs."
+        },
+        {
+            question: "What is the main function of a Problem Statement in your introduction?",
+            options: [
+                "To introduce your thesis and main arguments",
+                "To grab attention with a statistic or question",
+                "To point out why the current situation may be problematic or needs addressing",
+                "To provide general context about the topic"
+            ],
+            correct: 2,
+            explanation: "The Problem Statement's function is to point out why the current situation is problematic or needs addressing. It creates the need for your argument by showing what's wrong or what needs to change."
+        },
+        {
+            question: "In what order should the four introduction elements appear?",
+            options: [
+                "Hook → Problem Statement → Background → Thesis",
+                "Background → Hook → Problem Statement → Thesis",
+                "Hook → Background → Problem Statement → Thesis",
+                "Thesis → Hook → Background → Problem Statement"
+            ],
+            correct: 2,
+            explanation: "The correct order is: Hook (grab attention) → Background (provide context) → Problem Statement (identify the issue) → Thesis (present your solution/argument)."
+        },
+        {
+            question: "Which statement about the Background/Current Situation element is TRUE?",
+            options: [
+                "It should identify problems and concerns with the current situation",
+                "It should provide neutral, general context about how the situation currently stands",
+                "It should state your main argument and three reasons",
+                "It should always include a citation in proper format"
+            ],
+            correct: 1,
+            explanation: "The Background/Current Situation should provide neutral, general context about how things currently stand. It's descriptive rather than argumentative - save the problem identification for the Problem Statement."
+        }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+
+    const questionText = document.getElementById('intro-question-text');
+    const optionsContainer = document.getElementById('intro-options-container');
+    const feedback = document.getElementById('intro-feedback');
+    const currentQuestionSpan = document.getElementById('intro-current-question');
+    const prevBtn = document.getElementById('intro-prev-btn');
+    const nextBtn = document.getElementById('intro-next-btn');
+    const progressFill = document.getElementById('intro-progress-fill');
+    const quizContent = document.getElementById('intro-quiz-content');
+    const resultsContainer = document.getElementById('intro-results-container');
+    const scoreDisplay = document.getElementById('intro-score-display');
+    const scoreMessage = document.getElementById('intro-score-message');
+    const restartBtn = document.getElementById('intro-restart-btn');
+
+    function loadQuestion() {
+        const question = quizData[currentQuestion];
+        questionText.textContent = question.question;
+        currentQuestionSpan.textContent = currentQuestion + 1;
+        
+        optionsContainer.innerHTML = '';
+        feedback.style.display = 'none';
+        
+        const letters = ['A', 'B', 'C', 'D'];
+        question.options.forEach(function(option, index) {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'intro-quiz-option';
+            optionDiv.innerHTML = '<span class="intro-option-letter">' + letters[index] + '.</span> ' + option;
+            
+            if (userAnswers[currentQuestion] !== null) {
+                optionDiv.classList.add('disabled');
+                if (index === question.correct) {
+                    optionDiv.classList.add('correct');
+                }
+                if (index === userAnswers[currentQuestion] && index !== question.correct) {
+                    optionDiv.classList.add('incorrect');
+                }
+                if (index === userAnswers[currentQuestion]) {
+                    optionDiv.classList.add('selected');
+                }
+            } else {
+                optionDiv.addEventListener('click', function() { selectOption(index); });
+            }
+            
+            optionsContainer.appendChild(optionDiv);
+        });
+
+        if (userAnswers[currentQuestion] !== null) {
+            showFeedback();
+        }
+
+        updateProgress();
+        updateButtons();
+    }
+
+    function selectOption(index) {
+        if (userAnswers[currentQuestion] !== null) return;
+        
+        userAnswers[currentQuestion] = index;
+        const question = quizData[currentQuestion];
+        
+        if (index === question.correct) {
+            score++;
+        }
+
+        const options = optionsContainer.querySelectorAll('.intro-quiz-option');
+        options.forEach(function(option) {
+            option.classList.add('disabled');
+            option.style.pointerEvents = 'none';
+        });
+
+        options[index].classList.add('selected');
+        options[question.correct].classList.add('correct');
+        
+        if (index !== question.correct) {
+            options[index].classList.add('incorrect');
+        }
+
+        showFeedback();
+        updateButtons();
+    }
+
+    function showFeedback() {
+        const question = quizData[currentQuestion];
+        const userAnswer = userAnswers[currentQuestion];
+        
+        if (userAnswer === null) return;
+
+        const isCorrect = userAnswer === question.correct;
+        feedback.style.display = 'block';
+        
+        if (isCorrect) {
+            feedback.style.background = '#e8f5e8';
+            feedback.style.color = '#2e7d32';
+            feedback.style.border = '1px solid #27ae60';
+        } else {
+            feedback.style.background = '#ffebee';
+            feedback.style.color = '#c62828';
+            feedback.style.border = '1px solid #e74c3c';
+        }
+        
+        feedback.innerHTML = '<div style="font-weight: bold; margin-bottom: 10px;">' + 
+            (isCorrect ? '✓ Correct!' : '✗ Incorrect') + 
+            '</div><div>' + question.explanation + '</div>';
+    }
+
+    function updateProgress() {
+        const progress = ((currentQuestion + 1) / quizData.length) * 100;
+        progressFill.style.width = progress + '%';
+    }
+
+    function updateButtons() {
+        prevBtn.disabled = currentQuestion === 0;
+        
+        if (currentQuestion === quizData.length - 1) {
+            nextBtn.textContent = 'View Results';
+        } else {
+            nextBtn.textContent = 'Next Question';
+        }
+    }
+
+    function nextQuestion() {
+        if (currentQuestion < quizData.length - 1) {
+            currentQuestion++;
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQuestion > 0) {
+            currentQuestion--;
+            loadQuestion();
+        }
+    }
+
+    function showResults() {
+        quizContent.style.display = 'none';
+        resultsContainer.style.display = 'block';
+        
+        scoreDisplay.textContent = score + '/' + quizData.length;
+        
+        const percentage = (score / quizData.length) * 100;
+        let message = '';
+        
+        if (percentage === 100) {
+            message = '🎉 Perfect score! You\'ve mastered the four introduction elements!';
+        } else if (percentage >= 80) {
+            message = '🌟 Great job! You have a strong understanding of introduction structure!';
+        } else if (percentage >= 60) {
+            message = '👍 Good work! Review the feedback to strengthen your understanding.';
+        } else {
+            message = '📚 Keep studying! Review the introduction elements guide and try again.';
+        }
+        
+        scoreMessage.textContent = message;
+    }
+
+    function restartQuiz() {
+        currentQuestion = 0;
+        score = 0;
+        userAnswers = new Array(quizData.length).fill(null);
+        quizContent.style.display = 'block';
+        resultsContainer.style.display = 'none';
+        loadQuestion();
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', prevQuestion);
+    if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
+    if (restartBtn) restartBtn.addEventListener('click', restartQuiz);
+
+    // Initialize quiz
+    loadQuestion();
+})();
+</script>
